@@ -21,5 +21,8 @@
         <module>Mall-Order</module>
         <module>Mall-ware</module>
         <module>Mall-Coupon</module>
+        <module>renren-generator</module>
+        <module>renren-fast</module>
+        <module>Mall-Common</module>
     </modules>
 </project>
