@@ -24,5 +24,6 @@
         <module>renren-generator</module>
         <module>renren-fast</module>
         <module>Mall-Common</module>
+        <module>Mall-GateWay</module>
     </modules>
 </project>

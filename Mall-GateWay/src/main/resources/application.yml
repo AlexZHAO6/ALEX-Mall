@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: Mall-GateWay
+  cloud:
+    nacos:
+      serverAddr: 127.0.0.1:8848
+      username: 'nacos'
+      password: 'nacos'
+      config:
+        namespace: ccbf2fb3-02d9-49e7-9a37-e06a4e91ae6e
+
+    gateway:
+      routes:
+        - id: test_rout
+          uri: https://www.baidu.com
+          predicates:
+            - Query=url,baidu
+        #for Mall-product apis
+        - id: product_route
+          uri: lb://Mall-Product
+          predicates:
+            - Path=/api/mallproduct/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment}
+  config:
+    import:
+      - nacos:Mall-GateWay.properties?refreshEnabled=true&group=DEFAULT_GROUP
+
+
+server:
+  port: 88

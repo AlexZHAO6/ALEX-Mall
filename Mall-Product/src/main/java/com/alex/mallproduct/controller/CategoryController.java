@@ -1,6 +1,7 @@
 package com.alex.mallproduct.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -76,15 +77,35 @@ public class CategoryController {
         return R.ok();
     }
 
+    //batch update
+    @RequestMapping("/update/list")
+    //@RequiresPermissions("mallproduct:category:update")
+    public R updateList(@RequestBody CategoryEntity[] categoryList){
+        categoryService.updateBatchById(Arrays.asList(categoryList));
+
+        return R.ok();
+    }
+
     /**
      * 删除
      */
     @RequestMapping("/delete")
     //@RequiresPermissions("mallproduct:category:delete")
     public R delete(@RequestBody Long[] catIds){
-		categoryService.removeByIds(Arrays.asList(catIds));
+        categoryService.removeMenuByIds(Arrays.asList(catIds));
+		//categoryService.removeByIds(Arrays.asList(catIds));
 
         return R.ok();
     }
+
+
+    @RequestMapping("list/tree")
+    public R listWithTree(){
+        List<CategoryEntity> entities = categoryService.listWithTree();
+
+        return R.ok().put("tree: ", entities);
+    }
+
+
 
 }
