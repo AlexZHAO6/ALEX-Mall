@@ -56,7 +56,7 @@ public class BrandEntity implements Serializable {
 	/**
 	 * 检索首字母
 	 */
-	@Pattern(regexp = "/^[a-zA-Z]$/", message = "must be a letter", groups = {UpdateGroup.class, AddGroup.class})
+	@Pattern(regexp = "^[a-zA-Z]$", message = "must be a letter", groups = {UpdateGroup.class, AddGroup.class})
 	@NotEmpty(groups = { AddGroup.class})
 	private String firstLetter;
 	/**

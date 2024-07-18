@@ -1,7 +1,11 @@
 package com.alex.mallproduct.service.impl;
 
+import com.alex.mallproduct.service.CategoryBrandRelationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,11 +19,14 @@ import com.alex.common.utils.Query;
 import com.alex.mallproduct.dao.CategoryDao;
 import com.alex.mallproduct.entity.CategoryEntity;
 import com.alex.mallproduct.service.CategoryService;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service("categoryService")
 public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity> implements CategoryService {
 
+    @Autowired
+    private CategoryBrandRelationService categoryBrandRelationService;
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<CategoryEntity> page = this.page(
@@ -53,6 +60,25 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         baseMapper.deleteBatchIds(list);
     }
 
+    @Override
+    public Long[] findCatelogPath(Long catelogId) {
+        List<Long> paths = new ArrayList<>();
+
+        findParentPath(catelogId, paths);
+
+        Collections.reverse(paths);
+
+        return paths.toArray(new Long[paths.size()]);
+    }
+
+    private void findParentPath(Long catelogId, List<Long> paths){
+        paths.add(catelogId);
+        CategoryEntity categoryEntity = this.getById(catelogId);
+        if(categoryEntity.getParentCid() != 0){
+            findParentPath(categoryEntity.getParentCid(), paths);
+        }
+    }
+
     private List<CategoryEntity> getChildren(CategoryEntity root, List<CategoryEntity> all){
         List<CategoryEntity> list = all.stream().filter(category -> category.getParentCid() == root.getCatId())
                 .map(category -> {
@@ -63,6 +89,19 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                 .toList();
 
         return list;
+    }
+
+    /**
+     * cascade update all the category data
+     * @param category
+     */
+    @Transactional
+    @Override
+    public void updateCascade(CategoryEntity category) {
+        this.updateById(category);
+        if(!category.getName().isEmpty()){
+            categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
+        }
     }
 
 }
