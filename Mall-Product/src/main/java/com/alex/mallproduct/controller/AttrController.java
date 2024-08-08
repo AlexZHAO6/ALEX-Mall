@@ -4,12 +4,10 @@ import java.util.Arrays;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallproduct.vo.AttrRespVo;
+import com.alex.mallproduct.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallproduct.entity.AttrEntity;
 import com.alex.mallproduct.service.AttrService;
@@ -31,6 +29,12 @@ public class AttrController {
     @Autowired
     private AttrService attrService;
 
+
+    @GetMapping("/base/list/{catelogId}")
+    public R baseAttrList(@RequestParam Map<String, Object> params, @PathVariable Long catelogId){
+        PageUtils page = attrService.queryBaseAttrPage(params, catelogId);
+        return R.ok().put("page", page);
+    }
     /**
      * 列表
      */
@@ -49,9 +53,9 @@ public class AttrController {
     @RequestMapping("/info/{attrId}")
     //@RequiresPermissions("mallproduct:attr:info")
     public R info(@PathVariable("attrId") Long attrId){
-		AttrEntity attr = attrService.getById(attrId);
+		AttrRespVo attrRespVo = attrService.getAttrInfo(attrId);
 
-        return R.ok().put("attr", attr);
+        return R.ok().put("attr", attrRespVo);
     }
 
     /**
@@ -59,8 +63,8 @@ public class AttrController {
      */
     @RequestMapping("/save")
     //@RequiresPermissions("mallproduct:attr:save")
-    public R save(@RequestBody AttrEntity attr){
-		attrService.save(attr);
+    public R save(@RequestBody AttrVo attr){
+		attrService.saveAttrVo(attr);
 
         return R.ok();
     }

@@ -1,5 +1,7 @@
 package com.alex.mallproduct.service;
 
+import com.alex.mallproduct.vo.AttrRespVo;
+import com.alex.mallproduct.vo.AttrVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.alex.common.utils.PageUtils;
 import com.alex.mallproduct.entity.AttrEntity;
@@ -16,5 +18,11 @@ import java.util.Map;
 public interface AttrService extends IService<AttrEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    void saveAttrVo(AttrVo attr);
+
+    PageUtils queryBaseAttrPage(Map<String, Object> params, Long catelogId);
+
+    AttrRespVo getAttrInfo(Long attrId);
 }
 
