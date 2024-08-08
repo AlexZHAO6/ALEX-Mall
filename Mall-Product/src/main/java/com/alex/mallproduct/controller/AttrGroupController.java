@@ -1,16 +1,15 @@
 package com.alex.mallproduct.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallproduct.entity.AttrEntity;
+import com.alex.mallproduct.service.AttrService;
 import com.alex.mallproduct.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallproduct.entity.AttrGroupEntity;
 import com.alex.mallproduct.service.AttrGroupService;
@@ -35,6 +34,23 @@ public class AttrGroupController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private AttrService attrService;
+    @GetMapping("/{attrgroupId}/attr/relation")
+    public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId){
+
+        List<AttrEntity> entityList = attrService.getRelationAttr(attrgroupId);
+
+        return R.ok().put("data", entityList);
+    }
+
+    @GetMapping("/{attrgroupId}/noattr/relation")
+    public R attrNoRelation(@RequestParam Map<String, Object> params, @PathVariable("attrgroupId") Long attrgroupId){
+
+        PageUtils page = attrService.getNoRelationAttr(params, attrgroupId);
+
+        return R.ok().put("page", page);
+    }
     /**
      * 列表
      */
