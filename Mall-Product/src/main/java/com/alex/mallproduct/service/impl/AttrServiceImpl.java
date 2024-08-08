@@ -61,9 +61,11 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
 
         //2. save attrGroup info
         AttrAttrgroupRelationEntity entity = new AttrAttrgroupRelationEntity();
-        entity.setAttrGroupId(attr.getAttrGroupId());
-        entity.setAttrId(attrEntity.getAttrId());
-        attrAttrgroupRelationDao.insert(entity);
+        if(attr.getAttrGroupId() != null){
+            entity.setAttrGroupId(attr.getAttrGroupId());
+            entity.setAttrId(attrEntity.getAttrId());
+            attrAttrgroupRelationDao.insert(entity);
+        }
     }
 
     @Override
@@ -162,5 +164,6 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         IPage<AttrEntity> page = this.page(new Query<AttrEntity>().getPage(params), attrEntityQueryWrapper);
         return new PageUtils(page);
     }
+
 
 }

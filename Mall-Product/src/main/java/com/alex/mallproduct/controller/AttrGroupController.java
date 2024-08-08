@@ -6,8 +6,10 @@ import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.alex.mallproduct.entity.AttrEntity;
+import com.alex.mallproduct.service.AttrAttrgroupRelationService;
 import com.alex.mallproduct.service.AttrService;
 import com.alex.mallproduct.service.CategoryService;
+import com.alex.mallproduct.vo.AttrGroupRelationVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +38,9 @@ public class AttrGroupController {
 
     @Autowired
     private AttrService attrService;
+
+    @Autowired
+    private AttrAttrgroupRelationService relationService;
     @GetMapping("/{attrgroupId}/attr/relation")
     public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId){
 
@@ -43,6 +48,13 @@ public class AttrGroupController {
 
         return R.ok().put("data", entityList);
     }
+
+    @PostMapping("/attr/relation")
+    public R addRelation(@RequestBody List<AttrGroupRelationVo> vos){
+        relationService.saveBatch(vos);
+        return R.ok();
+    }
+
 
     @GetMapping("/{attrgroupId}/noattr/relation")
     public R attrNoRelation(@RequestParam Map<String, Object> params, @PathVariable("attrgroupId") Long attrgroupId){
