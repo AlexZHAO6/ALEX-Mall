@@ -24,6 +24,9 @@ import com.alex.common.utils.R;
  * @author Alex@@
  * @email alex@gmail.com
  * @date 2024-07-08 10:32:36
+ *  * SKU表示一种属性确定的单品，用于库存管理和销售统计。
+ *  * SPU表示一种抽象的商品集合，用于商品分类和展示。
+ *  * SKU与SPU之间存在着包含和细分的关系，一个SPU下面可以有多个SKU，而一个SKU只能属于一个SPU
  */
 @RestController
 @RequestMapping("mallproduct/skuinfo")

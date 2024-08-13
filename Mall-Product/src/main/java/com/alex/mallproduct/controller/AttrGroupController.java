@@ -10,6 +10,7 @@ import com.alex.mallproduct.service.AttrAttrgroupRelationService;
 import com.alex.mallproduct.service.AttrService;
 import com.alex.mallproduct.service.CategoryService;
 import com.alex.mallproduct.vo.AttrGroupRelationVo;
+import com.alex.mallproduct.vo.AttrGroupWithAttrsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,14 @@ public class AttrGroupController {
     public R attrRelation(@PathVariable("attrgroupId") Long attrgroupId){
 
         List<AttrEntity> entityList = attrService.getRelationAttr(attrgroupId);
+
+        return R.ok().put("data", entityList);
+    }
+
+    @GetMapping("/{catelogId}/withattr")
+    public R getAttrGroupWithAttrs(@PathVariable("catelogId") Long catelogId){
+
+        List<AttrGroupWithAttrsVo> entityList = attrGroupService.getAttrGroupWithAttrsByCatId(catelogId);
 
         return R.ok().put("data", entityList);
     }

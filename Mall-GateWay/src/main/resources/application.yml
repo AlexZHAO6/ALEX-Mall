@@ -21,7 +21,16 @@ spring:
           predicates:
             - Path=/api/mallproduct/**
           filters:
-            - RewritePath=/api/(?<segment>.*),/$\{segment}
+            - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+        #for Mall-Member apis
+        - id: member_route
+          uri: lb://Mall-Member
+          predicates:
+            - Path=/api/mallmember/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+
+
   config:
     import:
       - nacos:Mall-GateWay.properties?refreshEnabled=true&group=DEFAULT_GROUP

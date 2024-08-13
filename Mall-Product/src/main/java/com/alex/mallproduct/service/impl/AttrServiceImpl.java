@@ -6,6 +6,7 @@ import com.alex.mallproduct.dao.AttrGroupDao;
 import com.alex.mallproduct.entity.AttrAttrgroupRelationEntity;
 import com.alex.mallproduct.entity.AttrGroupEntity;
 import com.alex.mallproduct.service.CategoryService;
+import com.alex.mallproduct.vo.AttrGroupWithAttrsVo;
 import com.alex.mallproduct.vo.AttrRespVo;
 import com.alex.mallproduct.vo.AttrVo;
 import org.springframework.beans.BeanUtils;
@@ -164,6 +165,8 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         IPage<AttrEntity> page = this.page(new Query<AttrEntity>().getPage(params), attrEntityQueryWrapper);
         return new PageUtils(page);
     }
+
+
 
 
 }
