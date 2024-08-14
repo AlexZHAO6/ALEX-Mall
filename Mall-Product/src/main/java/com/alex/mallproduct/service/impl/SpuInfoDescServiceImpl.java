@@ -1,6 +1,8 @@
 package com.alex.mallproduct.service.impl;
 
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Map;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,6 +26,14 @@ public class SpuInfoDescServiceImpl extends ServiceImpl<SpuInfoDescDao, SpuInfoD
         );
 
         return new PageUtils(page);
+    }
+
+    @Override
+    public void saveDesc(Long id, List<String> desc) {
+        SpuInfoDescEntity descEntity = new SpuInfoDescEntity();
+        descEntity.setSpuId(id);
+        descEntity.setDecript(String.join(",", desc));
+        this.save(descEntity);
     }
 
 }
