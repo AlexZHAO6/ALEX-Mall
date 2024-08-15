@@ -1,5 +1,7 @@
 package com.alex.mallware.service.impl;
 
+import com.alex.mallware.entity.WareSkuEntity;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import java.util.Map;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,9 +20,21 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
+        QueryWrapper<PurchaseEntity> wrapper = new QueryWrapper<>();
+        String key = (String) params.get("key");
+        if(!StringUtils.isEmpty(key)){
+            wrapper.and(w -> {
+                w.eq("purchase_id", key).or().eq("sku_id", key);
+            });
+        }
+
+        String status = (String) params.get("status");
+        if(!StringUtils.isEmpty(status)){
+            wrapper.eq("status", status);
+        }
         IPage<PurchaseEntity> page = this.page(
                 new Query<PurchaseEntity>().getPage(params),
-                new QueryWrapper<PurchaseEntity>()
+                wrapper
         );
 
         return new PageUtils(page);
