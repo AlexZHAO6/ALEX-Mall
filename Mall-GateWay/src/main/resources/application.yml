@@ -29,6 +29,13 @@ spring:
             - Path=/api/mallmember/**
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+        #for Mall-ware apis
+        - id: member_route
+          uri: lb://Mall-ware
+          predicates:
+            - Path=/api/mallware/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
 
 
   config:
