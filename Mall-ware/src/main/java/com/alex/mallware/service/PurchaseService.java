@@ -1,5 +1,6 @@
 package com.alex.mallware.service;
 
+import com.alex.mallware.vo.MergeVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.alex.common.utils.PageUtils;
 import com.alex.mallware.entity.PurchaseEntity;
@@ -16,5 +17,9 @@ import java.util.Map;
 public interface PurchaseService extends IService<PurchaseEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    PageUtils queryPageUnreceivedPurchase(Map<String, Object> params);
+
+    void mergePurchase(MergeVO mergeVO);
 }
 

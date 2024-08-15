@@ -4,12 +4,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallware.vo.MergeVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallware.entity.PurchaseEntity;
 import com.alex.mallware.service.PurchaseService;
@@ -30,6 +27,23 @@ import com.alex.common.utils.R;
 public class PurchaseController {
     @Autowired
     private PurchaseService purchaseService;
+
+
+    @PostMapping("/merge")
+    //@RequiresPermissions("mallware:purchase:list")
+    public R merge(@RequestBody MergeVO mergeVO){
+        purchaseService.mergePurchase(mergeVO);
+
+        return R.ok();
+    }
+
+    @RequestMapping("/unreceived/list")
+    //@RequiresPermissions("mallware:purchase:list")
+    public R unreceivedList(@RequestParam Map<String, Object> params){
+        PageUtils page = purchaseService.queryPageUnreceivedPurchase(params);
+
+        return R.ok().put("page", page);
+    }
 
     /**
      * 列表
