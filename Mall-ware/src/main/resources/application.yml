@@ -22,3 +22,7 @@ mybatis-plus:
 
 server:
   port: 11000
+
+logging:
+  level:
+    com.alex: debug
