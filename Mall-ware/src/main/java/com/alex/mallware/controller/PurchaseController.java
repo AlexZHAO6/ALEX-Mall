@@ -5,6 +5,7 @@ import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.alex.mallware.vo.MergeVO;
+import com.alex.mallware.vo.PurchaseDoneVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,13 @@ public class PurchaseController {
     @Autowired
     private PurchaseService purchaseService;
 
+    @PostMapping("/done")
+    //@RequiresPermissions("mallware:purchase:list")
+    public R finishPurchase(@RequestBody PurchaseDoneVO vo){
+        purchaseService.finishPurchase(vo);
+
+        return R.ok();
+    }
 
     @PostMapping("/merge")
     //@RequiresPermissions("mallware:purchase:list")
