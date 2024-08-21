@@ -66,8 +66,6 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             }
             catch (Exception e){}
 
-
-
             this.baseMapper.insert(entity);
         }
 
