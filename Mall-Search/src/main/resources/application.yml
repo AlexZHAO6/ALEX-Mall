@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: Mall-Search
+  cloud:
+    nacos:
+      serverAddr: 127.0.0.1:8848
+      username: 'nacos'
+      password: 'nacos'
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+
+  config:
+    import:
+      - nacos:Mall-Search.properties?refreshEnabled=true&group=DEFAULT_GROUP
+
+logging:
+  level:
+    com.alex.mallproduct: debug
+
