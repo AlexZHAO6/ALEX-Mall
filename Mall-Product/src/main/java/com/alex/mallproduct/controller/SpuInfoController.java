@@ -6,11 +6,7 @@ import java.util.Map;
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.alex.mallproduct.vo.SpuSaveVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallproduct.entity.SpuInfoEntity;
 import com.alex.mallproduct.service.SpuInfoService;
@@ -35,6 +31,14 @@ import com.alex.common.utils.R;
 public class SpuInfoController {
     @Autowired
     private SpuInfoService spuInfoService;
+
+    @PostMapping("/{spuId}/up")
+    //@RequiresPermissions("mallproduct:spuinfo:list")
+    public R spuUp(@PathVariable Long spuId){
+        spuInfoService.up(spuId);
+
+        return R.ok();
+    }
 
     /**
      * 列表

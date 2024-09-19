@@ -1,15 +1,13 @@
 package com.alex.mallware.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallware.vo.SkuHasStockVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallware.entity.WareSkuEntity;
 import com.alex.mallware.service.WareSkuService;
@@ -85,6 +83,20 @@ public class WareSkuController {
 		wareSkuService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+
+    /*
+    * Search if the sku has stock
+    *
+    * */
+    @PostMapping("/hasstock")
+    //@RequiresPermissions("mallware:waresku:list")
+    public R<List<SkuHasStockVO>> getSkuHasStock(@RequestBody List<Long> skuIds){
+        List<SkuHasStockVO> res = wareSkuService.getSkuHasStock(skuIds);
+
+        R<List<SkuHasStockVO>> ok = R.ok();
+        ok.setData(res);
+        return ok;
     }
 
 }

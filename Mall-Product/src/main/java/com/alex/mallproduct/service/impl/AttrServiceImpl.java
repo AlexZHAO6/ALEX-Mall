@@ -6,6 +6,7 @@ import com.alex.mallproduct.dao.AttrGroupDao;
 import com.alex.mallproduct.entity.AttrAttrgroupRelationEntity;
 import com.alex.mallproduct.entity.AttrGroupEntity;
 import com.alex.mallproduct.service.CategoryService;
+import com.alex.mallproduct.vo.Attr;
 import com.alex.mallproduct.vo.AttrGroupWithAttrsVo;
 import com.alex.mallproduct.vo.AttrRespVo;
 import com.alex.mallproduct.vo.AttrVo;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -166,7 +168,13 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         return new PageUtils(page);
     }
 
+    @Override
+    public List<Long> selectSearchAttrs(List<Long> arrrIds) {
+        List<AttrEntity> list = this.list(new QueryWrapper<AttrEntity>().in("attr_id", arrrIds).eq("search_type", 1));
+        List<Long> collected = list.stream().map(a -> a.getAttrId()).collect(Collectors.toList());
 
+        return collected;
+    }
 
 
 }
