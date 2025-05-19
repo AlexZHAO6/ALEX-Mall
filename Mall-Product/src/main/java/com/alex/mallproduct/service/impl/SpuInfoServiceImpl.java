@@ -263,9 +263,8 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         }
         else {
             //TODO: deal with onboard error
-            //TODO：接口幂等性？重试？
+            //TODO：Interface idempotent？retry？
         }
-
 
     }
 }
