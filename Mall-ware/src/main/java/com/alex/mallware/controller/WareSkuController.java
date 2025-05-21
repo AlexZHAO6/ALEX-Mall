@@ -91,12 +91,10 @@ public class WareSkuController {
     * */
     @PostMapping("/hasstock")
     //@RequiresPermissions("mallware:waresku:list")
-    public R<List<SkuHasStockVO>> getSkuHasStock(@RequestBody List<Long> skuIds){
+    public R getSkuHasStock(@RequestBody List<Long> skuIds){
         List<SkuHasStockVO> res = wareSkuService.getSkuHasStock(skuIds);
 
-        R<List<SkuHasStockVO>> ok = R.ok();
-        ok.setData(res);
-        return ok;
+        return R.ok().setData(res);
     }
 
 }

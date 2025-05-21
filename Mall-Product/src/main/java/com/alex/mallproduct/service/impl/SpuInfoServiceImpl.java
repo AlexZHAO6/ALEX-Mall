@@ -12,6 +12,7 @@ import com.alex.mallproduct.feign.SearchFeignService;
 import com.alex.mallproduct.feign.WareFeignService;
 import com.alex.mallproduct.service.*;
 import com.alex.mallproduct.vo.*;
+import com.alibaba.fastjson2.TypeReference;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -216,8 +217,10 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         Map<Long, Boolean> hasStockMap = null;
         try {
             List<Long> skuIds = skus.stream().map(SkuInfoEntity::getSkuId).toList();
-            R<List<SkuHasStockVO>> res = wareFeignService.getSkuHasStock(skuIds);
-            hasStockMap = res.getData().stream().collect(Collectors.
+            R res = wareFeignService.getSkuHasStock(skuIds);
+            TypeReference<List<SkuHasStockVO>> typeReference = new TypeReference<>(){
+            };
+            hasStockMap = res.getData(typeReference).stream().collect(Collectors.
                     toMap(SkuHasStockVO::getSkuId, SkuHasStockVO::getHasStock));
         }
         catch (Exception e) {

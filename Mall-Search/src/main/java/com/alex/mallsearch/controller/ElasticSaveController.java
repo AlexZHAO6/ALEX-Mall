@@ -22,14 +22,20 @@ public class ElasticSaveController {
 
     @PostMapping("/product")
     public R productStatusUp(@RequestBody List<SkuEsModel> models){
+        boolean b = false;
         try {
-            productSaveService.productStatusUp(models);
+             b = productSaveService.productStatusUp(models);
         }
         catch (Exception e){
             log.error("onboard es failed", e.getMessage());
             return R.error("onboard es failed");
         }
+        if(b){
+            return R.ok();
+        }
+        else {
+            return R.error("onboard es failed");
+        }
 
-        return R.ok();
     }
 }

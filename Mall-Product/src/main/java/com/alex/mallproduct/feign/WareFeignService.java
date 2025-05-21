@@ -12,5 +12,5 @@ import java.util.List;
 @FeignClient("Mall-ware")
 public interface WareFeignService {
     @PostMapping("/mallware/waresku/hasstock")
-    R<List<SkuHasStockVO>> getSkuHasStock(@RequestBody List<Long> skuIds);
+    R getSkuHasStock(@RequestBody List<Long> skuIds);
 }

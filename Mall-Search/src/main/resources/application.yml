@@ -17,3 +17,6 @@ logging:
   level:
     com.alex.mallproduct: debug
 
+server:
+  port: 12000
+

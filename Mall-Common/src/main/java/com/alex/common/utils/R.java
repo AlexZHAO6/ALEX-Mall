@@ -8,31 +8,36 @@
 
 package com.alex.common.utils;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.apache.http.HttpStatus;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
- * 返回数据
- *
- * @author Mark sunlightcs@gmail.com
+ * return data
  */
-public class R<T> extends HashMap<String, Object> {
+public class R extends HashMap<String, Object> {
 	private static final long serialVersionUID = 1L;
 
-	public T getData() {
-		return data;
-	}
-
-	public void setData(T data) {
-		this.data = data;
-	}
-
-	private T data;
 	public R() {
 		put("code", 0);
 		put("msg", "success");
+	}
+
+	public <T> T getData(TypeReference<T> typeReference){
+		Object data = get("data");
+		String jsonString = JSON.toJSONString(data);
+		T t = JSON.parseObject(jsonString, typeReference);
+		return t;
+	}
+	public R setData(Object data){
+		put("data", data);
+		return this;
 	}
 	
 	public static R error() {
