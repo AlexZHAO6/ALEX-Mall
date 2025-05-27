@@ -55,6 +55,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         }
         TypeReference<List<CategoryEntity>> typeReference = new TypeReference<>(){};
         List<CategoryEntity> result = JSON.parseObject(catelogJSON, typeReference);
+
+        //TODO: deal with OutOfDirectMemory exception when high concurrency
+        //done! the old version lettuce client doesn't release the connection properly, so upgrade the version could
+        //solve the problem
         return result;
     }
 
