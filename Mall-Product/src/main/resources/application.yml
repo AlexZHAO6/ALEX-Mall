@@ -15,10 +15,13 @@ spring:
       password: 'nacos'
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
-
   config:
     import:
       - nacos:Mall-Product.properties?refreshEnabled=true&group=DEFAULT_GROUP
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
 
 
 mybatis-plus:

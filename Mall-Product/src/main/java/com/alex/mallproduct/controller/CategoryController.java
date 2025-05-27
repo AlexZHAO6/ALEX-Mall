@@ -5,12 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallproduct.vo.Catelog2Vo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallproduct.entity.CategoryEntity;
 import com.alex.mallproduct.service.CategoryService;
@@ -99,13 +96,10 @@ public class CategoryController {
     }
 
 
-    @RequestMapping("list/tree")
+    @RequestMapping("/list/tree")
     public R listWithTree(){
         List<CategoryEntity> entities = categoryService.listWithTree();
 
         return R.ok().put("tree: ", entities);
     }
-
-
-
 }

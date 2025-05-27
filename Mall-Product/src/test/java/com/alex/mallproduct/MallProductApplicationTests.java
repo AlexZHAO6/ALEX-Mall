@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +21,8 @@ class MallProductApplicationTests {
     public BrandService brandService;
     @Autowired
     public CategoryService categoryService;
+    @Autowired
+    public StringRedisTemplate stringRedisTemplate;
 
     @Test
     public void testFindPath(){
@@ -32,6 +35,11 @@ class MallProductApplicationTests {
         b.forEach((item) -> System.out.println(item));
 
         System.out.println("go!");
+    }
+    @Test
+    public void testRedis(){
+        stringRedisTemplate.opsForValue().set("hello", "world ahaha");
+        System.out.println(stringRedisTemplate.opsForValue().get("hello"));
     }
 
 }

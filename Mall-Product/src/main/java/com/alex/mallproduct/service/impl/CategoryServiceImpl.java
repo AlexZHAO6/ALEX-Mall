@@ -1,7 +1,12 @@
 package com.alex.mallproduct.service.impl;
 
 import com.alex.mallproduct.service.CategoryBrandRelationService;
+import com.alex.mallproduct.vo.Catelog2Vo;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,6 +32,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     private CategoryBrandRelationService categoryBrandRelationService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<CategoryEntity> page = this.page(
@@ -37,9 +44,23 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return new PageUtils(page);
     }
 
-    //get categories with Tree(using recursion)
     @Override
     public List<CategoryEntity> listWithTree() {
+        String catelogJSON = stringRedisTemplate.opsForValue().get("catelogJSON");
+        if(catelogJSON == null){
+            List<CategoryEntity> categoryEntities = listWithTreeFromDB();
+            String json = JSON.toJSONString(categoryEntities);
+            stringRedisTemplate.opsForValue().set("catelogJSON", json);
+            return categoryEntities;
+        }
+        TypeReference<List<CategoryEntity>> typeReference = new TypeReference<>(){};
+        List<CategoryEntity> result = JSON.parseObject(catelogJSON, typeReference);
+        return result;
+    }
+
+    //get categories with Tree(using recursion)
+    private List<CategoryEntity> listWithTreeFromDB() {
+
         List<CategoryEntity> categoryEntities = baseMapper.selectList(null);
 
         List<CategoryEntity> listWithTree = categoryEntities.stream().
@@ -103,5 +124,4 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
         }
     }
-
 }
