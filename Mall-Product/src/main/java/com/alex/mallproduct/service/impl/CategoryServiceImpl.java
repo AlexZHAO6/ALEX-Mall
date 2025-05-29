@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -46,18 +47,23 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public List<CategoryEntity> listWithTree() {
+        /**
+         * 1. deal with cache penetration
+         * 2. deal with cache breakdown
+         * 3. deal with cache avalanche
+         */
+
         String catelogJSON = stringRedisTemplate.opsForValue().get("catelogJSON");
         if(catelogJSON == null){
             List<CategoryEntity> categoryEntities = listWithTreeFromDB();
             String json = JSON.toJSONString(categoryEntities);
-            stringRedisTemplate.opsForValue().set("catelogJSON", json);
+            stringRedisTemplate.opsForValue().set("catelogJSON", json, 1, TimeUnit.DAYS);
             return categoryEntities;
         }
         TypeReference<List<CategoryEntity>> typeReference = new TypeReference<>(){};
         List<CategoryEntity> result = JSON.parseObject(catelogJSON, typeReference);
 
-        //TODO: deal with OutOfDirectMemory exception when high concurrency
-        //done! the old version lettuce client doesn't release the connection properly, so upgrade the version
+        //mention! the old version lettuce client doesn't release the connection properly, so upgrade the version
         //or use jedis client could solve the problem
         return result;
     }

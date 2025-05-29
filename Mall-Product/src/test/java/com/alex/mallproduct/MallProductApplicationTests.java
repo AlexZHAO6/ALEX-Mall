@@ -6,6 +6,7 @@ import com.alex.mallproduct.service.CategoryService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,6 +24,8 @@ class MallProductApplicationTests {
     public CategoryService categoryService;
     @Autowired
     public StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    public RedissonClient redissonClient;
 
     @Test
     public void testFindPath(){
@@ -40,6 +43,12 @@ class MallProductApplicationTests {
     public void testRedis(){
         stringRedisTemplate.opsForValue().set("hello", "world ahaha");
         System.out.println(stringRedisTemplate.opsForValue().get("hello"));
+    }
+
+    @Test
+    public void testRedisson(){
+
+        System.out.println(redissonClient);
     }
 
 }
