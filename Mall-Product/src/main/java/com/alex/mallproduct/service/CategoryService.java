@@ -1,6 +1,5 @@
 package com.alex.mallproduct.service;
 
-import com.alex.mallproduct.vo.Catelog2Vo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.alex.common.utils.PageUtils;
 import com.alex.mallproduct.entity.CategoryEntity;

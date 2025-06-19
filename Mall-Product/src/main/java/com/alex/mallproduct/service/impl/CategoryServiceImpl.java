@@ -8,6 +8,9 @@ import com.alibaba.fastjson.TypeReference;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +53,27 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     }
 
     @Override
+    @Cacheable(value = "category", key = "#root.methodName")
     public List<CategoryEntity> listWithTree() {
+
+        List<CategoryEntity> listWithTree = null;
+
+        List<CategoryEntity> categoryEntities = baseMapper.selectList(null);
+
+        listWithTree = categoryEntities.stream().
+                filter(categoryEntity -> categoryEntity.getParentCid() == 0)
+                .map(v -> {
+                    v.setChildren(getChildren(v, categoryEntities));
+                    return v;
+                })
+                .sorted((a, b) -> (a.getSort() == null ? 0 : a.getSort()) - (b.getSort() == null ? 0 : b.getSort()))
+                .collect(Collectors.toList());
+
+
+        return listWithTree;
+    }
+
+    public List<CategoryEntity> listWithTreeManuallyUseCache() {
         /**
          * 1. deal with cache penetration
          * 2. deal with cache breakdown
@@ -61,8 +84,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         String catelogJSON = stringRedisTemplate.opsForValue().get("catelogJSON");
         if(catelogJSON == null){
             List<CategoryEntity> categoryEntities = listWithTreeFromDB();
-            String json = JSON.toJSONString(categoryEntities);
-            stringRedisTemplate.opsForValue().set("catelogJSON", json, 1, TimeUnit.DAYS);
+
             return categoryEntities;
         }
         TypeReference<List<CategoryEntity>> typeReference = new TypeReference<>(){};
@@ -90,11 +112,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                     })
                     .sorted((a, b) -> (a.getSort() == null ? 0 : a.getSort()) - (b.getSort() == null ? 0 : b.getSort()))
                     .toList();
+
+            String json = JSON.toJSONString(listWithTree);
+            stringRedisTemplate.opsForValue().set("catelogJSON", json, 1, TimeUnit.DAYS);
         }
         finally {
             lock.unlock();
         }
-
 
         return listWithTree;
     }
@@ -142,6 +166,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
      */
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "category", key = "'listWithTree'")
+    })
     public void updateCascade(CategoryEntity category) {
         this.updateById(category);
         if(!category.getName().isEmpty()){
