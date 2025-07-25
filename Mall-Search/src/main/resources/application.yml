@@ -12,6 +12,8 @@ spring:
   config:
     import:
       - nacos:Mall-Search.properties?refreshEnabled=true&group=DEFAULT_GROUP
+  thymeleaf:
+    cache: false
 
 logging:
   level:

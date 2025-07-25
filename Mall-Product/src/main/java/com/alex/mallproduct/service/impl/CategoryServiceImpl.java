@@ -53,7 +53,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     }
 
     @Override
-    @Cacheable(value = "category", key = "#root.methodName")
+    @Cacheable(value = "category", key = "#root.methodName", sync = true) // sync used to add lock for dealing with cache breakdown
     public List<CategoryEntity> listWithTree() {
 
         List<CategoryEntity> listWithTree = null;

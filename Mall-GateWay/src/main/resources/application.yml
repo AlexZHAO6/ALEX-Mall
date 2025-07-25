@@ -37,6 +37,21 @@ spring:
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
 
+        #for search apis
+        - id: searchMall_route
+          uri: lb://Mall-Search
+          predicates:
+            - Path=/api/mallsearch/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+        #for search apis
+        - id: search_route
+          uri: lb://Mall-Search
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+
 
   config:
     import:
