@@ -16,7 +16,7 @@ public class SearchParam {
     private String sort;
     private Integer hasStock;
     private String skuPrice;
-    private List<Long> brandId;
+    private List<Long> brandIds;
     private List<String> attrs;
-    private Integer pageNum;
+    private Integer pageNum = 1;
 }
