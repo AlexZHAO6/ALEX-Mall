@@ -128,7 +128,7 @@ public class MallSearchServiceImpl implements MallSearchService {
                         : total / EsConstant.PRODUCT_PAGESIZE + 1));
         searchResponse.setPageNum(searchParam.getPageNum());
 
-        return null;
+        return searchResponse;
     }
 
     private SearchRequest buildSearchRequest(SearchParam searchParam) {

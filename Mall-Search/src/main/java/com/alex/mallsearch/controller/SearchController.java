@@ -1,5 +1,6 @@
 package com.alex.mallsearch.controller;
 
+import com.alex.common.utils.R;
 import com.alex.mallsearch.service.MallSearchService;
 import com.alex.mallsearch.vo.SearchParam;
 import com.alex.mallsearch.vo.SearchResponse;
@@ -16,6 +17,7 @@ public class SearchController {
     public String listPage(SearchParam searchParam, Model model){
         SearchResponse result = mallSearchService.search(searchParam);
         model.addAttribute("result", result);
-        return null;
+
+        return "list";
     }
 }
