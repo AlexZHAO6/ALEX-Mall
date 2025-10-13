@@ -1,5 +1,6 @@
 package com.alex.mallproduct.service;
 
+import com.alex.mallproduct.vo.SkuItemVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.alex.common.utils.PageUtils;
 import com.alex.mallproduct.entity.SkuInfoEntity;
@@ -19,5 +20,7 @@ public interface SkuInfoService extends IService<SkuInfoEntity> {
     PageUtils queryPage(Map<String, Object> params);
 
     List<SkuInfoEntity> getSkusBySpuId(Long spuId);
+
+    SkuItemVo item(Long skuId);
 }
 

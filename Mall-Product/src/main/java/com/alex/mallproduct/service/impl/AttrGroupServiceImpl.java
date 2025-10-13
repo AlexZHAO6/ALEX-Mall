@@ -3,6 +3,8 @@ package com.alex.mallproduct.service.impl;
 import com.alex.mallproduct.entity.AttrEntity;
 import com.alex.mallproduct.service.AttrService;
 import com.alex.mallproduct.vo.AttrGroupWithAttrsVo;
+import com.alex.mallproduct.vo.SkuItemVo;
+import com.alex.mallproduct.vo.SpuItemAttrGroupVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,6 +84,13 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
 
 
         return collect;
+    }
+
+    @Override
+    public List<SpuItemAttrGroupVo> getAttrGroupWithAttrsBySpuId(Long spuId, Long catalogId) {
+        //Find all the attr related info for the specific spuId
+        List<SpuItemAttrGroupVo> vos = this.baseMapper.getAttrGroupWithAttrsBySpuId(spuId, catalogId);
+        return vos;
     }
 
 }

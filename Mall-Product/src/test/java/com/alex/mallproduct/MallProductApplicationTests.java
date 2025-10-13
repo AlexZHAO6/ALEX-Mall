@@ -3,6 +3,8 @@ package com.alex.mallproduct;
 import com.alex.mallproduct.entity.BrandEntity;
 import com.alex.mallproduct.service.BrandService;
 import com.alex.mallproduct.service.CategoryService;
+import com.alex.mallproduct.service.impl.AttrGroupServiceImpl;
+import com.alex.mallproduct.vo.SpuItemAttrGroupVo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,15 @@ class MallProductApplicationTests {
     public StringRedisTemplate stringRedisTemplate;
     @Autowired
     public RedissonClient redissonClient;
+    @Autowired
+    public AttrGroupServiceImpl attrGroupService;
 
+    @Test
+    public void testJoinFunc(){
+        List<SpuItemAttrGroupVo> attrGroupWithAttrsBySpuId = attrGroupService.getAttrGroupWithAttrsBySpuId(1L, 1L);
+        System.out.println(attrGroupWithAttrsBySpuId.toString());
+
+    }
     @Test
     public void testFindPath(){
         Long[] catelogPath = categoryService.findCatelogPath(225L);

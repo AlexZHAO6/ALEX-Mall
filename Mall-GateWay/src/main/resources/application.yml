@@ -22,6 +22,11 @@ spring:
             - Path=/api/mallproduct/**
           filters:
             - RewritePath=/api/(?<segment>.*),/$\{segment} #it means remove 'api' and keep the rest
+        #for Mall-product host
+        - id: product_host_route
+          uri: lb://Mall-Product
+          predicates:
+            - Host=gulimall.com,item.gulimall.com
         #for Mall-Member apis
         - id: member_route
           uri: lb://Mall-Member
