@@ -3,6 +3,7 @@ package com.alex.mallproduct.service.impl;
 import com.alex.mallproduct.entity.SkuImagesEntity;
 import com.alex.mallproduct.entity.SpuInfoDescEntity;
 import com.alex.mallproduct.service.*;
+import com.alex.mallproduct.vo.SkuItemSaleAttrVo;
 import com.alex.mallproduct.vo.SkuItemVo;
 import com.alex.mallproduct.vo.SpuItemAttrGroupVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -29,6 +34,11 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
     private SpuInfoDescService spuInfoDescService;
     @Autowired
     private AttrGroupService attrGroupService;
+    @Autowired
+    private SkuSaleAttrValueService saleAttrValueService;
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
+
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<SkuInfoEntity> page = this.page(
@@ -46,24 +56,45 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
     }
 
     @Override
-    public SkuItemVo item(Long skuId) {
+    public SkuItemVo item(Long skuId) throws ExecutionException, InterruptedException {
         SkuItemVo skuItemVo = new SkuItemVo();
+
         //1. basic sku info -- pms_sku_info
-        SkuInfoEntity skuInfoEntity = getById(skuId);
-        skuItemVo.setSkuInfoEntity(skuInfoEntity);
-        //2. sku image info -- pms_sku_images
-        List<SkuImagesEntity> images = skuImagesService.getImagesBySkuId(skuId);
-        skuItemVo.setImages(images);
-        //3. sku's spu related info --
+        CompletableFuture<SkuInfoEntity> infoFuture = CompletableFuture.supplyAsync(() -> {
+            SkuInfoEntity skuInfoEntity = getById(skuId);
+            skuItemVo.setSkuInfoEntity(skuInfoEntity);
+
+            return skuInfoEntity;
+        }, threadPoolExecutor);
+
+        CompletableFuture<Void> skuImageFuture = CompletableFuture.runAsync(() -> {
+            //2. sku image info -- pms_sku_images
+            List<SkuImagesEntity> images = skuImagesService.getImagesBySkuId(skuId);
+            skuItemVo.setImages(images);
+        }, threadPoolExecutor);
+
+        CompletableFuture<Void> saleAttrFuture = infoFuture.thenAcceptAsync((res) -> {
+            //3. sku's spu related info --
+            List<SkuItemSaleAttrVo> saleAttrVo = saleAttrValueService.getSaleAttrsBySpuId(res.getSpuId());
+            skuItemVo.setSaleAttrs(saleAttrVo);
+        }, threadPoolExecutor);
+
+        CompletableFuture<Void> descFuture = infoFuture.thenAcceptAsync((res) -> {
+            //4. sku's spu introduction info
+            SpuInfoDescEntity spuInfoDesc = spuInfoDescService.getById(res.getSpuId());
+            skuItemVo.setSpuInfoDescEntity(spuInfoDesc);
+        }, threadPoolExecutor);
+
+        CompletableFuture<Void> baseAttrFuture = infoFuture.thenAcceptAsync((res) -> {
+            //5. sku's spu attrs
+            List<SpuItemAttrGroupVo> attrs = attrGroupService.getAttrGroupWithAttrsBySpuId(res.getSpuId(), res.getCatalogId());
+            skuItemVo.setGroupAttrs(attrs);
+        }, threadPoolExecutor);
 
 
-        //4. sku's spu introduction info
-        Long spuId = skuInfoEntity.getSpuId();
-        SpuInfoDescEntity spuInfoDesc = spuInfoDescService.getById(spuId);
-        skuItemVo.setSpuInfoDescEntity(spuInfoDesc);
-        //5. sku's spu attrs
-        Long catalogId = skuInfoEntity.getCatalogId();
-        List<SpuItemAttrGroupVo> attrs = attrGroupService.getAttrGroupWithAttrsBySpuId(spuId,catalogId);
+        //after all the tasks are done, return the res
+        CompletableFuture.allOf(infoFuture, saleAttrFuture, skuImageFuture, descFuture, baseAttrFuture).get();
+
         return skuItemVo;
     }
 

@@ -22,7 +22,7 @@
     </resultMap>
 
     <select id="getAttrGroupWithAttrsBySpuId"
-            resultType="SpuItemAttrGroupVo">
+            resultMap="SpuItemAttrGroupVo">
             select
                 pav.`spu_id`,
                 ag.`attr_group_name`,
@@ -36,6 +36,5 @@
             left join `pms_product_attr_value` pav on pav.`attr_id` = attr.`attr_id`
             where ag.catelog_id=#{catalogId} and pav.`spu_id`=#{spuId}
     </select>
-
 
 </mapper>

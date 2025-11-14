@@ -3,7 +3,9 @@ package com.alex.mallproduct;
 import com.alex.mallproduct.entity.BrandEntity;
 import com.alex.mallproduct.service.BrandService;
 import com.alex.mallproduct.service.CategoryService;
+import com.alex.mallproduct.service.SkuSaleAttrValueService;
 import com.alex.mallproduct.service.impl.AttrGroupServiceImpl;
+import com.alex.mallproduct.vo.SkuItemSaleAttrVo;
 import com.alex.mallproduct.vo.SpuItemAttrGroupVo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +32,16 @@ class MallProductApplicationTests {
     public RedissonClient redissonClient;
     @Autowired
     public AttrGroupServiceImpl attrGroupService;
+    @Autowired
+    public SkuSaleAttrValueService skuSaleAttrValueService;
 
     @Test
     public void testJoinFunc(){
-        List<SpuItemAttrGroupVo> attrGroupWithAttrsBySpuId = attrGroupService.getAttrGroupWithAttrsBySpuId(1L, 1L);
+        List<SpuItemAttrGroupVo> attrGroupWithAttrsBySpuId = attrGroupService.getAttrGroupWithAttrsBySpuId(15L, 1L);
         System.out.println(attrGroupWithAttrsBySpuId.toString());
 
+        List<SkuItemSaleAttrVo> saleAttrs = skuSaleAttrValueService.getSaleAttrsBySpuId(1L);
+        System.out.println(saleAttrs.toString());
     }
     @Test
     public void testFindPath(){
