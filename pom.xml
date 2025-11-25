@@ -26,5 +26,6 @@
         <module>Mall-Common</module>
         <module>Mall-GateWay</module>
         <module>Mall-Search</module>
+        <module>Mall-Cart</module>
     </modules>
 </project>
