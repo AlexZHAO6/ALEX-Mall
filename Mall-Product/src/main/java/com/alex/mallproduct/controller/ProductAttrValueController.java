@@ -1,15 +1,12 @@
 package com.alex.mallproduct.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallproduct.entity.ProductAttrValueEntity;
 import com.alex.mallproduct.service.ProductAttrValueService;
@@ -85,6 +82,11 @@ public class ProductAttrValueController {
 		productAttrValueService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+
+    @GetMapping("/sku/{skuId}")
+    public List<String> getSkuSaleAttrValues(@PathVariable("skuId") Long skuId) {
+        return productAttrValueService.getSkuSaleAttrValues(skuId);
     }
 
 }
