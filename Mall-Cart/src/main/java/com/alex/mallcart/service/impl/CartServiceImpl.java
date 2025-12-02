@@ -3,6 +3,7 @@ package com.alex.mallcart.service.impl;
 import com.alex.common.utils.R;
 import com.alex.mallcart.feign.ProductFeignService;
 import com.alex.mallcart.service.CartService;
+import com.alex.mallcart.vo.Cart;
 import com.alex.mallcart.vo.CartItem;
 import com.alex.mallcart.vo.SkuInfoVo;
 import com.alibaba.fastjson.JSON;
@@ -14,6 +15,7 @@ import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -75,5 +77,76 @@ public class CartServiceImpl implements CartService {
             boundHashOperations.put(skuId.toString(), jsonString);
             return existingCartItem;
         }
+    }
+
+    @Override
+    public CartItem getCartItem(Long skuId, Long userId) {
+        String cartKey = CART_PREFIX + userId;
+        BoundHashOperations<String, Object, Object> boundHashOperations = redisTemplate.boundHashOps(cartKey);
+        String res = (String) boundHashOperations.get(skuId.toString());
+
+        if(!StringUtils.isEmpty(res)){
+            CartItem cartItem = JSON.parseObject(res, CartItem.class);
+            return cartItem;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Cart getCart(Long userId) {
+        String cartKey = CART_PREFIX + userId;
+        BoundHashOperations<String, Object, Object> boundHashOperations = redisTemplate.boundHashOps(cartKey);
+        List<Object> values = boundHashOperations.values();
+        Cart cart = new Cart();
+
+        if(values != null && values.size() > 0){
+            List<CartItem> ls = new ArrayList<>();
+            for (Object res : values) {
+                String jsonString = (String) res;
+                CartItem cartItem = JSON.parseObject(jsonString, CartItem.class);
+                ls.add(cartItem);
+            }
+            cart.setItems(ls);
+        }
+
+        return cart;
+    }
+
+    @Override
+    public void checkItem(Long skuId, Integer check, Long userId) {
+        String cartKey = CART_PREFIX + userId;
+        BoundHashOperations<String, Object, Object> boundHashOperations = redisTemplate.boundHashOps(cartKey);
+        String res = (String) boundHashOperations.get(skuId.toString());
+
+        if(!StringUtils.isEmpty(res)){
+            CartItem cartItem = JSON.parseObject(res, CartItem.class);
+            cartItem.setCheck(check == 1);
+
+            String jsonString = JSON.toJSONString(cartItem);
+            boundHashOperations.put(skuId.toString(), jsonString);
+        }
+    }
+
+    @Override
+    public void countItem(Long skuId, Integer num, Long userId) {
+        String cartKey = CART_PREFIX + userId;
+        BoundHashOperations<String, Object, Object> boundHashOperations = redisTemplate.boundHashOps(cartKey);
+        String res = (String) boundHashOperations.get(skuId.toString());
+
+        if(!StringUtils.isEmpty(res)){
+            CartItem cartItem = JSON.parseObject(res, CartItem.class);
+            cartItem.setCount(num);
+
+            String jsonString = JSON.toJSONString(cartItem);
+            boundHashOperations.put(skuId.toString(), jsonString);
+        }
+    }
+
+    @Override
+    public void deleteItem(Long skuId, Long userId) {
+        String cartKey = CART_PREFIX + userId;
+        BoundHashOperations<String, Object, Object> boundHashOperations = redisTemplate.boundHashOps(cartKey);
+        boundHashOperations.delete(skuId.toString());
     }
 }
