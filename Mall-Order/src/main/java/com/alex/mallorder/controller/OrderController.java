@@ -2,14 +2,13 @@ package com.alex.mallorder.controller;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallorder.vo.OrderConfirmVO;
+import com.alex.mallorder.vo.OrderSubmitVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallorder.entity.OrderEntity;
 import com.alex.mallorder.service.OrderService;
@@ -86,5 +85,20 @@ public class OrderController {
 
         return R.ok();
     }
+
+    @GetMapping("/trade")
+    public R getTrade(@RequestParam("userId") Long userId) throws ExecutionException, InterruptedException {
+       OrderConfirmVO res = orderService.confirmOrder(userId);
+
+       return R.ok().put("trade", res);
+    }
+
+    @PostMapping("/submitOrder")
+    public R submitOrder(@RequestBody OrderSubmitVO orderSubmitVO) throws ExecutionException, InterruptedException {
+
+
+        return R.ok().put("order", null);
+    }
+
 
 }

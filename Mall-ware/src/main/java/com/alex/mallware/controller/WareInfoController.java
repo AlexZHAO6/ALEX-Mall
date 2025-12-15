@@ -1,15 +1,13 @@
 package com.alex.mallware.controller;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallware.vo.ShippingResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.alex.mallware.entity.WareInfoEntity;
 import com.alex.mallware.service.WareInfoService;
@@ -85,6 +83,12 @@ public class WareInfoController {
 		wareInfoService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+
+    @GetMapping("/shippingFee")
+    public R getShippingFee(@RequestParam("addrId") Long addrId) {
+        ShippingResponseVO shippingResponse = wareInfoService.getShippingFee(addrId);
+        return R.ok().setData(shippingResponse);
     }
 
 }

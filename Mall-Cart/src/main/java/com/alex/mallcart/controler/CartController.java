@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class CartController {
     @Autowired
@@ -63,5 +65,18 @@ public class CartController {
         return R.ok();
     }
 
+    @GetMapping("/currentUserCartItems")
+    public List<CartItem> getCurrentUserCartItems(@RequestParam("userId") Long userId) {
+        Cart cart = cartService.getCart(userId);
+        List<CartItem> res = cart.getItems().stream().filter(CartItem::getCheck)
+                .map(item -> {
+                    // 远程查询最新的价格
+                    // TODO Feign --> get the current price
+                    item.setPrice(item.getPrice());
+                    return item;
+                }).toList();
+
+        return res;
+    }
 
 }
