@@ -1,6 +1,8 @@
 package com.alex.mallorder.service;
 
 import com.alex.mallorder.vo.OrderConfirmVO;
+import com.alex.mallorder.vo.OrderSubmitVO;
+import com.alex.mallorder.vo.SubmitOrderResponseVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.alex.common.utils.PageUtils;
 import com.alex.mallorder.entity.OrderEntity;
@@ -20,5 +22,7 @@ public interface OrderService extends IService<OrderEntity> {
     PageUtils queryPage(Map<String, Object> params);
 
     OrderConfirmVO confirmOrder(Long userId) throws ExecutionException, InterruptedException;
+
+    SubmitOrderResponseVO submitOrder(OrderSubmitVO orderSubmitVO);
 }
 

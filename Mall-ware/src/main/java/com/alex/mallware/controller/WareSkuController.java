@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallware.vo.LockStockResultVO;
 import com.alex.mallware.vo.SkuHasStockVO;
+import com.alex.mallware.vo.WareLockVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,6 +96,12 @@ public class WareSkuController {
     public R getSkuHasStock(@RequestBody List<Long> skuIds){
         List<SkuHasStockVO> res = wareSkuService.getSkuHasStock(skuIds);
 
+        return R.ok().setData(res);
+    }
+
+    @PostMapping("/lock/order")
+    public R orderLockStock(@RequestBody WareLockVO vo){
+        List<LockStockResultVO> res = wareSkuService.orderLockStock(vo);
         return R.ok().setData(res);
     }
 

@@ -56,7 +56,7 @@ public class WareInfoServiceImpl extends ServiceImpl<WareInfoDao, WareInfoEntity
             //get the last num of phone number as shipping fee -- just for demo
             String phone = memberAddressVO.getPhone();
             char lastNum = phone.charAt(phone.length() - 1);
-            shippingResponseVO.setShippingFee(BigDecimal.valueOf(Integer.parseInt(String.valueOf(lastNum)));
+            shippingResponseVO.setShippingFee(BigDecimal.valueOf(Integer.parseInt(String.valueOf(lastNum))));
         }
 
         return shippingResponseVO;

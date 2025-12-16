@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.alex.mallorder.vo.OrderConfirmVO;
 import com.alex.mallorder.vo.OrderSubmitVO;
+import com.alex.mallorder.vo.SubmitOrderResponseVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -95,9 +96,13 @@ public class OrderController {
 
     @PostMapping("/submitOrder")
     public R submitOrder(@RequestBody OrderSubmitVO orderSubmitVO) throws ExecutionException, InterruptedException {
-
-
-        return R.ok().put("order", null);
+        SubmitOrderResponseVO res = orderService.submitOrder(orderSubmitVO);
+        if(res.getCode() == 0){
+            return R.ok().put("orderResponse", res);
+        }
+        else{
+            return R.error(400, "Order submission failed").put("orderResponse", res);
+        }
     }
 
 

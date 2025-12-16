@@ -2,7 +2,9 @@ package com.alex.mallware.service.impl;
 
 import com.alex.common.utils.R;
 import com.alex.mallware.feign.ProductFeignService;
+import com.alex.mallware.vo.LockStockResultVO;
 import com.alex.mallware.vo.SkuHasStockVO;
+import com.alex.mallware.vo.WareLockVO;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -89,6 +91,12 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         }).toList();
 
         return collect;
+    }
+
+    @Override
+    public List<LockStockResultVO> orderLockStock(WareLockVO vo) {
+
+        return null;
     }
 
 }
