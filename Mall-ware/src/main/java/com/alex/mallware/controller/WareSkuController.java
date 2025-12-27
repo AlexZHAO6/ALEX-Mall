@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.alex.mallware.exception.NoStockException;
 import com.alex.mallware.vo.LockStockResultVO;
 import com.alex.mallware.vo.SkuHasStockVO;
 import com.alex.mallware.vo.WareLockVO;
@@ -101,8 +102,13 @@ public class WareSkuController {
 
     @PostMapping("/lock/order")
     public R orderLockStock(@RequestBody WareLockVO vo){
-        List<LockStockResultVO> res = wareSkuService.orderLockStock(vo);
-        return R.ok().setData(res);
+        try {
+            Boolean res = wareSkuService.orderLockStock(vo);
+            return R.ok();
+        }
+        catch (NoStockException e){
+            return R.error("No stock available");
+        }
     }
 
 }

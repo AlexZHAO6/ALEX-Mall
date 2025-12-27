@@ -12,6 +12,7 @@ import com.alex.mallorder.vo.*;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import constant.OrderConstant;
+//import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -121,10 +122,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return orderConfirmVO;
     }
 
+//    @GlobalTransactional --- too slow
     @Transactional
     @Override
     public SubmitOrderResponseVO submitOrder(OrderSubmitVO orderSubmitVO) {
         SubmitOrderResponseVO responseVO = new SubmitOrderResponseVO();
+        responseVO.setCode(0);
         String orderToken = orderSubmitVO.getOrderToken();
         Long userId = orderSubmitVO.getUserId();
         submitVOThreadLocal.set(orderSubmitVO);
@@ -146,10 +149,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             BigDecimal payAmount = orderCreateTO.getOrder().getPayAmount();
             BigDecimal payPrice = orderSubmitVO.getPayPrice();
 
-            if (Math.abs(payAmount.subtract(payPrice).doubleValue()) < 0.01) {
+            if (Math.abs(payAmount.subtract(payPrice).doubleValue()) < 1000000) {
                 //price check passed
                 //save the order into DB
                 saveOrder(orderCreateTO);
+
                 //lock stock
                 WareLockVO wareLockVO = new WareLockVO();
                 wareLockVO.setOrderSn(orderCreateTO.getOrder().getOrderSn());
@@ -166,23 +170,27 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 if(lockRes.getCode() == 0){
                     //lock successfully
 
+                    int i = 10/0; //test rollback
+                    responseVO.setOrder(orderCreateTO.getOrder());
+                    return responseVO;
                 }
                 else {
                     //lock failed
+                    responseVO.setCode(3);
+                    return responseVO;
                 }
-
             }
             else {
                 //price check failed
                 responseVO.setCode(2);
                 return responseVO;
             }
-
-
-
-
-            return responseVO;
         }
+    }
+
+    @Override
+    public OrderEntity getOrderByOrderSn(String orderSn) {
+        return this.baseMapper.selectOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
     }
 
     private void saveOrder(OrderCreateTO orderCreateTO) {

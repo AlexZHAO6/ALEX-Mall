@@ -2,12 +2,14 @@ package com.alex.mallorder.controller;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.alex.mallorder.vo.OrderConfirmVO;
 import com.alex.mallorder.vo.OrderSubmitVO;
 import com.alex.mallorder.vo.SubmitOrderResponseVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +32,8 @@ import com.alex.common.utils.R;
 public class OrderController {
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     /**
      * 列表
@@ -95,15 +99,33 @@ public class OrderController {
     }
 
     @PostMapping("/submitOrder")
-    public R submitOrder(@RequestBody OrderSubmitVO orderSubmitVO) throws ExecutionException, InterruptedException {
+    public R submitOrder(@RequestBody OrderSubmitVO orderSubmitVO){
         SubmitOrderResponseVO res = orderService.submitOrder(orderSubmitVO);
         if(res.getCode() == 0){
             return R.ok().put("orderResponse", res);
         }
         else{
-            return R.error(400, "Order submission failed").put("orderResponse", res);
+            return switch (res.getCode()) {
+                case 1 -> R.error(400, "Order information expired, please refresh and resubmit");
+                case 2 -> R.error(400, "Price verification failed, please confirm and resubmit");
+                case 3 -> R.error(400, "Insufficient stock for one or more items");
+                default -> R.error(400, "Unknown error");
+            };
         }
     }
 
+    @GetMapping("/orderInfo/{orderSn}")
+    public R getOrderInfo(@PathVariable("orderSn") String orderSn){
+        OrderEntity order = orderService.getOrderByOrderSn(orderSn);
+        return R.ok().setData(order);
 
+    }
+
+//    @GetMapping("/test/order")
+//    public String testCreateOrder(){
+//        OrderEntity entity = new OrderEntity();
+//        entity.setOrderSn(UUID.randomUUID().toString());
+//        rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", entity);
+//        return "ok";
+//    }
 }

@@ -1,14 +1,28 @@
 package com.alex.mallware.service.impl;
 
+import com.alex.common.to.mq.StockDetailTO;
+import com.alex.common.to.mq.StockLockedTO;
 import com.alex.common.utils.R;
+import com.alex.mallware.entity.WareOrderTaskDetailEntity;
+import com.alex.mallware.entity.WareOrderTaskEntity;
+import com.alex.mallware.exception.NoStockException;
+import com.alex.mallware.feign.OrderFeignService;
 import com.alex.mallware.feign.ProductFeignService;
-import com.alex.mallware.vo.LockStockResultVO;
-import com.alex.mallware.vo.SkuHasStockVO;
-import com.alex.mallware.vo.WareLockVO;
+import com.alex.mallware.service.WareOrderTaskDetailService;
+import com.alex.mallware.service.WareOrderTaskService;
+import com.alex.mallware.vo.*;
+import com.alibaba.fastjson2.TypeReference;
+import com.rabbitmq.client.Channel;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,13 +36,72 @@ import com.alex.common.utils.Query;
 import com.alex.mallware.dao.WareSkuDao;
 import com.alex.mallware.entity.WareSkuEntity;
 import com.alex.mallware.service.WareSkuService;
+import org.springframework.transaction.annotation.Transactional;
 
 
+@RabbitListener(queues = "stock.release.stock.queue")
 @Service("wareSkuService")
 public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> implements WareSkuService {
 
     @Autowired
     private ProductFeignService productFeignService;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private WareOrderTaskService wareOrderTaskService;
+    @Autowired
+    private WareOrderTaskDetailService wareOrderTaskDetailService;
+    @Autowired
+    private OrderFeignService orderFeignService;
+
+    @RabbitHandler
+    @Transactional
+    public void handleStockLockedRelease(StockLockedTO to, Message message, Channel channel) throws IOException {
+        //TODO handle the stock release
+        Long id = to.getId();
+        StockDetailTO stockDetailTO = to.getDetails();
+
+        Long detailId = stockDetailTO.getId();
+        WareOrderTaskDetailEntity res = wareOrderTaskDetailService.getById(detailId);
+        if(res != null){
+            WareOrderTaskEntity wareOrderTaskEntity = wareOrderTaskService.getById(id);
+            String orderSn = wareOrderTaskEntity.getOrderSn();
+            //check the order status
+            //TODO call order service to get order status
+            R orderInfo = orderFeignService.getOrderInfo(orderSn);
+            if(orderInfo.getCode() == 0){
+                OrderVO orderData = orderInfo.getData(new TypeReference<OrderVO>() {
+                });
+                if(orderData == null || orderData.getStatus() == 4){
+                    //order is cancelled or does not exist
+                    //release the stock
+                    this.baseMapper.unlockStock(
+                            stockDetailTO.getSkuId(),
+                            stockDetailTO.getWareId(),
+                            stockDetailTO.getSkuNum()
+                    );
+
+                    //update the lock status
+                    res.setLockStatus(2);//unlocked
+                    wareOrderTaskDetailService.updateById(res);
+
+                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                }
+                else {
+                    //order is not cancelled, do not unlock
+                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                }
+            }
+            else {
+                //order service call failed, requeue the message
+                channel.basicReject(message.getMessageProperties().getDeliveryTag(), true);
+            }
+        }
+        else {
+            //detail record does not exist, no need to unlock
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        }
+    }
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         QueryWrapper<WareSkuEntity> wareSkuEntityQueryWrapper = new QueryWrapper<>();
@@ -93,10 +166,71 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         return collect;
     }
 
+    @Transactional(rollbackFor = NoStockException.class)
     @Override
-    public List<LockStockResultVO> orderLockStock(WareLockVO vo) {
+    public Boolean orderLockStock(WareLockVO vo) {
+        WareOrderTaskEntity wareOrderTaskEntity = new WareOrderTaskEntity();
+        wareOrderTaskEntity.setOrderSn(vo.getOrderSn());
+        wareOrderTaskService.save(wareOrderTaskEntity);
 
-        return null;
+        List<OrderItemVO> locks = vo.getLocks();
+        //find the warehouses that have stock
+        List<SkuWareHasStock> wareHasStocks = locks.stream().map(item -> {
+            SkuWareHasStock skuWareHasStock = new SkuWareHasStock();
+            Long skuId = item.getSkuId();
+            skuWareHasStock.setSkuId(skuId);
+            List<Long> wareIds = baseMapper.listWareIdsHasSkuStock(skuId);
+            skuWareHasStock.setWareIds(wareIds);
+            skuWareHasStock.setNum(item.getCount());
+            return skuWareHasStock;
+        }).collect(Collectors.toList());
+
+        //lock the stock
+        for (SkuWareHasStock wareHasStock : wareHasStocks){
+            Boolean skuStocked = false;
+            Long skuId = wareHasStock.getSkuId();
+            List<Long> wareIds = wareHasStock.getWareIds();
+            if(wareIds == null || wareIds.size() == 0){
+                //no stock
+                throw new NoStockException(skuId);
+            }
+            for(Long wareId: wareIds){
+                Long res = this.baseMapper.lockSkuStock(skuId, wareId, wareHasStock.getNum());
+                if(res == 1){
+                    skuStocked = true;
+
+                    WareOrderTaskDetailEntity wareOrderTaskDetailEntity = new WareOrderTaskDetailEntity();
+                    wareOrderTaskDetailEntity.setSkuId(skuId);
+                    wareOrderTaskDetailEntity.setSkuNum(wareHasStock.getNum());
+                    wareOrderTaskDetailEntity.setTaskId(wareOrderTaskEntity.getId());
+                    wareOrderTaskDetailEntity.setWareId(wareId);
+                    wareOrderTaskDetailEntity.setLockStatus(1);//locked
+
+                    wareOrderTaskDetailService.save(wareOrderTaskDetailEntity);
+                    //TODO send to MQ, the stock is locked
+                    StockLockedTO stockLockedTO = new StockLockedTO();
+                    stockLockedTO.setId(wareOrderTaskEntity.getId());
+
+                    StockDetailTO stockDetailTO = new StockDetailTO();
+                    BeanUtils.copyProperties(wareOrderTaskDetailEntity, stockDetailTO);
+                    stockLockedTO.setDetails(stockDetailTO);
+                    rabbitTemplate.convertAndSend("stock-event-exchange",
+                            "stock.locked", stockLockedTO);
+
+                    break;
+                }
+                else {
+                    continue;
+                }
+            }
+            if(!skuStocked){
+                throw new NoStockException(skuId);
+            }
+        }
+
+        //all stock locked successfully
+        return true;
     }
+
 
 }

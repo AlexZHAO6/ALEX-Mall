@@ -13,6 +13,7 @@ import com.alex.mallproduct.feign.WareFeignService;
 import com.alex.mallproduct.service.*;
 import com.alex.mallproduct.vo.*;
 import com.alibaba.fastjson2.TypeReference;
+//import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,10 +70,12 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         return new PageUtils(page);
     }
 
+    //seata AT
+//    @GlobalTransactional
     @Transactional
     @Override
     public void saveSpuInfo(SpuSaveVo spuInfo) {
-        //TODO: deal with Distributed Transaction
+        //TODO: deal with Distributed Transaction -- using seata globalTransaction
         //1. save basic info    pms_spu_info
         SpuInfoEntity spuInfoEntity = new SpuInfoEntity();
         BeanUtils.copyProperties(spuInfo, spuInfoEntity);

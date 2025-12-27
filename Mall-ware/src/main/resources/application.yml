@@ -19,6 +19,12 @@ spring:
 
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+  rabbitmq:
+    host: localhost
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: manual
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
@@ -32,3 +38,9 @@ server:
 logging:
   level:
     com.alex: debug
+
+seata:
+  tx-service-group: Mall-Ware-tx-group
+  service:
+    vgroup-mapping:
+      Mall-Ware-tx-group: default
