@@ -2,7 +2,7 @@ package com.alex.mallorder.enume;
 
 public enum OrderStatusEnum {
 
-    CREATE_NEW(0, "New Order"),
+    CREATE_NEW(0, "New Order, waiting for payment"),
     PAYED(1, "Paid"),
     SHIPPED(2, "Shipped"),
     RECEIVED(3, "Completed"),

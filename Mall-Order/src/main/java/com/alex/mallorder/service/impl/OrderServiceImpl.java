@@ -1,5 +1,6 @@
 package com.alex.mallorder.service.impl;
 
+import com.alex.common.to.mq.OrderTO;
 import com.alex.common.utils.R;
 import com.alex.mallorder.dao.OrderItemDao;
 import com.alex.mallorder.enume.OrderStatusEnum;
@@ -13,6 +14,8 @@ import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import constant.OrderConstant;
 //import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -56,6 +59,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Autowired
     private OrderItemService orderItemService;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     private ThreadLocal<OrderSubmitVO> submitVOThreadLocal = new ThreadLocal<>();
 
     @Override
@@ -169,9 +174,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 R lockRes = wareFeignService.orderLockStock(wareLockVO);
                 if(lockRes.getCode() == 0){
                     //lock successfully
-
-                    int i = 10/0; //test rollback
                     responseVO.setOrder(orderCreateTO.getOrder());
+                    //Order created, send to MQ
+                    rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", orderCreateTO.getOrder());
                     return responseVO;
                 }
                 else {
@@ -191,6 +196,26 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Override
     public OrderEntity getOrderByOrderSn(String orderSn) {
         return this.baseMapper.selectOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
+    }
+
+    @Override
+    public void closeOrder(OrderEntity order) {
+        OrderEntity orderEntity = this.baseMapper.selectById(order.getId());
+        //CREATE_NEW means it is created but not paid, need to close as already wait for a while
+        if(orderEntity.getStatus().equals(OrderStatusEnum.CREATE_NEW.getCode())){
+            OrderEntity updateOrder = new OrderEntity();
+            updateOrder.setId(order.getId());
+            updateOrder.setStatus(OrderStatusEnum.CANCELED.getCode());
+            this.baseMapper.updateById(updateOrder);
+
+            OrderTO orderTO = new OrderTO();
+            BeanUtils.copyProperties(orderEntity, orderTO);
+
+            //send the release info to MQ
+            rabbitTemplate.convertAndSend("order-event-exchange",
+                    "order.release.other", orderTO);
+        }
+
     }
 
     private void saveOrder(OrderCreateTO orderCreateTO) {

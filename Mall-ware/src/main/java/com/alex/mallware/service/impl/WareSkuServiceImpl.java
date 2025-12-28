@@ -1,5 +1,6 @@
 package com.alex.mallware.service.impl;
 
+import com.alex.common.to.mq.OrderTO;
 import com.alex.common.to.mq.StockDetailTO;
 import com.alex.common.to.mq.StockLockedTO;
 import com.alex.common.utils.R;
@@ -54,6 +55,39 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
     @Autowired
     private OrderFeignService orderFeignService;
 
+
+    @RabbitHandler
+    @Transactional
+    public void handleOrderCloseRelease(OrderTO order, Message message, Channel channel) throws IOException {
+        try {
+            //handle the stock release
+            String orderSn = order.getOrderSn();
+            //find the task entity
+            WareOrderTaskEntity wareOrderTaskEntity = wareOrderTaskService.getOrderTaskByOrderSn(orderSn);
+            Long id = wareOrderTaskEntity.getId();
+            //find all locked stock details
+            List<WareOrderTaskDetailEntity> detailEntities = wareOrderTaskDetailService.list(
+                    new QueryWrapper<WareOrderTaskDetailEntity>()
+                            .eq("task_id", id)
+                            .eq("lock_status", 1)
+            );
+            for (WareOrderTaskDetailEntity detailEntity : detailEntities){
+                this.baseMapper.unlockStock(
+                        detailEntity.getSkuId(),
+                        detailEntity.getWareId(),
+                        detailEntity.getSkuNum()
+                );
+                //update the lock status
+                detailEntity.setLockStatus(2);//unlocked
+                wareOrderTaskDetailService.updateById(detailEntity);
+            }
+
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        }
+        catch (Exception e) {
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(), true);
+        }
+    }
     @RabbitHandler
     @Transactional
     public void handleStockLockedRelease(StockLockedTO to, Message message, Channel channel) throws IOException {
@@ -82,6 +116,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                     );
 
                     //update the lock status
+                    //1 --- locked, 2 --- unlocked
                     res.setLockStatus(2);//unlocked
                     wareOrderTaskDetailService.updateById(res);
 

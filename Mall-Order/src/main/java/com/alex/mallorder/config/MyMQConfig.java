@@ -55,10 +55,16 @@ public class MyMQConfig {
         return binding;
     }
 
+    // Extra binding for stock release
+    //When the order is released, send the message to stockMQ, to unlock stock.
+    //Need this to prevent if the stock release message is arrived before the order release message.
+    @Bean
+    public Binding orderReleaseOtherBinding(){
+        Binding binding = new Binding("stock.release.stock.queue",
+                Binding.DestinationType.QUEUE,
+                "order-event-exchange",
+                "order.release.other.#", null);
+        return binding;
+    }
 
-//    @RabbitListener(queues = "order.release.order.queue")
-//    public void testListen(OrderEntity order, Channel channel, Message message) throws IOException {
-//        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-////        System.out.println("received late order, close it");
-//    }
 }
