@@ -27,5 +27,6 @@
         <module>Mall-GateWay</module>
         <module>Mall-Search</module>
         <module>Mall-Cart</module>
+        <module>Mall-SecKill</module>
     </modules>
 </project>

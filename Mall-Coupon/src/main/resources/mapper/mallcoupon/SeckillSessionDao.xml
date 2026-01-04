@@ -13,5 +13,12 @@
         <result property="createTime" column="create_time"/>
     </resultMap>
 
+    <select id="getLatest3DaysSession" resultMap="seckillSessionMap">
+        SELECT *
+        FROM seckill_session
+        WHERE DATE(start_time) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY)
+        ORDER BY start_time ASC
+    </select>
+
 
 </mapper>
