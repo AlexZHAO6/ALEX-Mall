@@ -43,10 +43,9 @@ public class SeckillServiceImpl implements SeckillService {
             List<SeckillSessionWithSkus> data = session.getData(new TypeReference<List<SeckillSessionWithSkus>>() {});
 
             //set into Redis
-            //1. campaign info, campaign items info
+            //campaign info, campaign items info
             saveSessionInfos(data);
             saveSessionSkuInfos(data);
-
         }
     }
 
@@ -57,9 +56,10 @@ public class SeckillServiceImpl implements SeckillService {
 
             String key = SESSION_CANCHE_PREFIX + startTime + "_" + endTime;
 
-            List<String> collected = session.getRelationEntities().stream().map(item->item.getSkuId().toString()).collect(Collectors.toList());
-
-            stringRedisTemplate.opsForList().leftPushAll(key, collected);
+            if(!stringRedisTemplate.hasKey(key)){
+                List<String> collected = session.getRelationEntities().stream().map(item->item.getPromotionSessionId().toString()+"_"+item.getSkuId().toString()).collect(Collectors.toList());
+                stringRedisTemplate.opsForList().leftPushAll(key, collected);
+            }
         });
     }
 
@@ -69,29 +69,32 @@ public class SeckillServiceImpl implements SeckillService {
             session.getRelationEntities().forEach(item -> {
                 SecKillSkuRedisTO redisTO = new SecKillSkuRedisTO();
                 Long skuId = item.getSkuId();
-                //1. sku info
-                R info = productFeignService.info(skuId);
-                if(info.getCode() == 0){
-                    SkuInfoVO skuInfo = info.getData("skuInfo", new TypeReference<SkuInfoVO>() {});
-                    redisTO.setSkuInfo(skuInfo);
-                }
-                //2. sku seckill info
-                BeanUtils.copyProperties(item, redisTO);
-                //3. random num, start time, end time
-                //random num for avoiding attack
-                redisTO.setStartTime(session.getStartTime().getTime());
-                redisTO.setEndTime(session.getEndTime().getTime());
-
                 String random = UUID.randomUUID().toString().replace("-", "");
-                redisTO.setRandomCode(random);
 
-                //4. distributed semaphore -- for limiting throughput
-                //the semaphore is the stock value, if the semaphore <= 0, no need accessing DB
-                RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + random);
-                semaphore.trySetPermits(redisTO.getSeckillCount().intValue());
+                if(!boundHashOperations.hasKey(item.getPromotionSessionId().toString()+"_"+skuId.toString())){
+                    //1. sku info
+                    R info = productFeignService.info(skuId);
+                    if(info.getCode() == 0){
+                        SkuInfoVO skuInfo = info.getData("skuInfo", new TypeReference<SkuInfoVO>() {});
+                        redisTO.setSkuInfo(skuInfo);
+                    }
+                    //2. sku seckill info
+                    BeanUtils.copyProperties(item, redisTO);
+                    //3. random num, start time, end time
+                    //random num for avoiding attack
+                    redisTO.setStartTime(session.getStartTime().getTime());
+                    redisTO.setEndTime(session.getEndTime().getTime());
 
-                String jsonString = JSON.toJSONString(redisTO);
-                boundHashOperations.put(item.getSkuId().toString(), jsonString);
+                    redisTO.setRandomCode(random);
+
+                    String jsonString = JSON.toJSONString(redisTO);
+                    boundHashOperations.put(item.getPromotionSessionId().toString()+"_"+item.getSkuId().toString(), jsonString);
+
+                    //4. distributed semaphore -- for limiting throughput
+                    //the semaphore is the stock value, if the semaphore <= 0, no need accessing DB
+                    RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + random);
+                    semaphore.trySetPermits(redisTO.getSeckillCount().intValue());
+                }
             });
         });
 
