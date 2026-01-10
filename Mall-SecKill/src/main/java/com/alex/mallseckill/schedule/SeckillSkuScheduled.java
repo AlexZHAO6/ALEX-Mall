@@ -20,6 +20,7 @@ public class SeckillSkuScheduled {
     private RedissonClient redissonClient;
     private static final String upload_lock="seckill:upload:lock";
     @Scheduled(cron = "0 0 3 * * ?")
+    //TODO add ttl for each item
     public void uploadSeckillSkuLatest3Days(){
         log.info("upload seckill sku info for the next 3 days");
         //ignore the duplicate items

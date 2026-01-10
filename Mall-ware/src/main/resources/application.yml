@@ -13,6 +13,10 @@ spring:
       serverAddr: 127.0.0.1:8848
       username: 'nacos'
       password: 'nacos'
+    sentinel:
+      transport:
+        port: 8719
+        dashboard: localhost:8333
   config:
     import:
       - nacos:Mall-ware.properties?refreshEnabled=true&group=DEFAULT_GROUP
