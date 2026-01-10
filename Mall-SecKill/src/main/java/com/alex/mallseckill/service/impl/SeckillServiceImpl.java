@@ -194,7 +194,7 @@ public class SeckillServiceImpl implements SeckillService {
 
         //2. semaphore -- extract stock
         RSemaphore rSemaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + secKillSkuRedisTO.getRandomCode());
-        boolean acquired = rSemaphore.tryAcquire(num, 100, TimeUnit.MILLISECONDS);
+        boolean acquired = rSemaphore.tryAcquire(num);
         if (!acquired){
             return null;
         }
