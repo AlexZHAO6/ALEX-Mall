@@ -18,9 +18,7 @@ import vo.SeckillSessionWithSkus;
 import vo.SeckillSkuVO;
 import vo.SkuInfoVO;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +46,6 @@ public class SeckillServiceImpl implements SeckillService {
             saveSessionSkuInfos(data);
         }
     }
-
     private void saveSessionInfos(List<SeckillSessionWithSkus> data){
         data.stream().forEach(session -> {
             Long startTime = session.getStartTime().getTime();
@@ -98,5 +95,41 @@ public class SeckillServiceImpl implements SeckillService {
             });
         });
 
+    }
+
+
+    @Override
+    public List<SecKillSkuRedisTO> getCurrentSeckillSkus() {
+        Long current = new Date().getTime();
+        Set<String> keys = stringRedisTemplate.keys(SESSION_CANCHE_PREFIX + "*");
+
+        for (String key : keys){
+            String replace = key.replace(SESSION_CANCHE_PREFIX, "");
+            String[] times = replace.split("_");
+
+            Long start = Long.parseLong(times[0]);
+            Long end = Long.parseLong(times[1]);
+
+            if(current >= start && current <= end){
+                List<String> range = stringRedisTemplate.opsForList().range(key, -100, 100);
+                BoundHashOperations<String, String, String> boundHashOperations = stringRedisTemplate.boundHashOps(SKU_CANCHE_PREFIX);
+
+                List<String> res = boundHashOperations.multiGet(range);
+                if(res != null){
+                    List<SecKillSkuRedisTO> collect = res.stream().map(item -> {
+                        SecKillSkuRedisTO secKillSkuRedisTO = new SecKillSkuRedisTO();
+                        SecKillSkuRedisTO redis = com.alibaba.fastjson2.JSON.parseObject(item.toString(), secKillSkuRedisTO.getClass());
+
+                        //redis.setRandomCode(null);
+
+                        return redis;
+                    }).collect(Collectors.toList());
+
+                    return collect;
+                }
+            }
+        }
+
+        return null;
     }
 }
