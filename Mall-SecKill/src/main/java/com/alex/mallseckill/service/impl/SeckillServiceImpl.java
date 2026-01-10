@@ -1,5 +1,6 @@
 package com.alex.mallseckill.service.impl;
 
+import com.alex.common.to.SeckillOrderTO;
 import com.alex.common.utils.R;
 import com.alex.mallseckill.feign.CouponFeignService;
 import com.alex.mallseckill.feign.ProductFeignService;
@@ -7,8 +8,10 @@ import com.alex.mallseckill.service.SeckillService;
 import com.alex.mallseckill.to.SecKillSkuRedisTO;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.TypeReference;
+import org.apache.commons.lang.StringUtils;
 import org.redisson.api.RSemaphore;
 import org.redisson.api.RedissonClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
@@ -19,6 +22,7 @@ import vo.SeckillSkuVO;
 import vo.SkuInfoVO;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +35,8 @@ public class SeckillServiceImpl implements SeckillService {
     private ProductFeignService productFeignService;
     @Autowired
     private RedissonClient redissonClient;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     private static final String SESSION_CANCHE_PREFIX = "seckill:sessions:";
     private static final String SKU_CANCHE_PREFIX = "seckill:skus:";
     private static final String SKU_STOCK_SEMAPHORE = "seckill:stock:";
@@ -131,5 +137,78 @@ public class SeckillServiceImpl implements SeckillService {
         }
 
         return null;
+    }
+
+    @Override
+    public SecKillSkuRedisTO getSkuSeckillInfo(Long skuId) {
+        BoundHashOperations<String, String, String> boundHashOperations = stringRedisTemplate.boundHashOps(SKU_CANCHE_PREFIX);
+        Set<String> keys = boundHashOperations.keys();
+        for (String key : keys){
+            String[] split = key.split("_");
+            if(skuId.toString().equals(split[1])){
+                String json = boundHashOperations.get(key);
+                SecKillSkuRedisTO secKillSkuRedisTO = new SecKillSkuRedisTO();
+                SecKillSkuRedisTO redis = com.alibaba.fastjson2.JSON.parseObject(json, secKillSkuRedisTO.getClass());
+
+                Long current = new Date().getTime();
+                if(current < redis.getStartTime() || current > redis.getEndTime()){
+                    redis.setRandomCode(null);
+                }
+
+                return redis;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public String secKill(String killId, String key, Integer num, Long userId) throws InterruptedException {
+        //1. verification
+        BoundHashOperations<String, String, String> boundHashOperations = stringRedisTemplate.boundHashOps(SKU_CANCHE_PREFIX);
+        String s = boundHashOperations.get(killId);
+        if(StringUtils.isEmpty(s)) {
+            return null;
+        }
+
+        SecKillSkuRedisTO secKillSkuRedisTO = com.alibaba.fastjson2.JSON.parseObject(s, SecKillSkuRedisTO.class);
+        Long current = new Date().getTime();
+        if(current < secKillSkuRedisTO.getStartTime() || current > secKillSkuRedisTO.getEndTime()){
+            return null;
+        }
+        if(!secKillSkuRedisTO.getRandomCode().equals(key)){
+            return null;
+        }
+        if(num > secKillSkuRedisTO.getSeckillLimit().intValue()){
+            return null;
+        }
+        //user can only buy once --- idempotency
+        String redisKey = userId.toString()+"_"+killId;
+        Long ttl = secKillSkuRedisTO.getEndTime() - current;
+        Boolean isSet = stringRedisTemplate.opsForValue().setIfAbsent(redisKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
+
+        if(!isSet){
+            //already bought
+            return null;
+        }
+
+        //2. semaphore -- extract stock
+        RSemaphore rSemaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + secKillSkuRedisTO.getRandomCode());
+        boolean acquired = rSemaphore.tryAcquire(num, 100, TimeUnit.MILLISECONDS);
+        if (!acquired){
+            return null;
+        }
+        //3. send order to MQ
+        String orderSn = UUID.randomUUID().toString().replace("-", "");
+        SeckillOrderTO seckillOrderTO = new SeckillOrderTO();
+        seckillOrderTO.setOrderSn(orderSn);
+        seckillOrderTO.setSkuId(secKillSkuRedisTO.getSkuId());
+        seckillOrderTO.setPromotionSessionId(secKillSkuRedisTO.getPromotionSessionId());
+        seckillOrderTO.setSeckillPrice(secKillSkuRedisTO.getSeckillPrice());
+        seckillOrderTO.setNum(num);
+        seckillOrderTO.setMemberId(userId);
+        rabbitTemplate.convertAndSend("order-event-exchange", "order.seckill.order", seckillOrderTO);
+
+        return orderSn;
     }
 }

@@ -1,5 +1,6 @@
 package com.alex.mallorder.service.impl;
 
+import com.alex.common.to.SeckillOrderTO;
 import com.alex.common.to.mq.OrderTO;
 import com.alex.common.utils.R;
 import com.alex.mallorder.dao.OrderItemDao;
@@ -216,6 +217,30 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     "order.release.other", orderTO);
         }
 
+    }
+
+    @Override
+    @Transactional
+    public OrderEntity createSeckillOrder(SeckillOrderTO seckillOrder) {
+        //TODO save order info -- use the standard logic
+        //currently save some basic info
+        OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setOrderSn(seckillOrder.getOrderSn());
+        orderEntity.setMemberId(seckillOrder.getMemberId());
+        orderEntity.setStatus(OrderStatusEnum.CREATE_NEW.getCode());
+        orderEntity.setPayAmount(seckillOrder.getSeckillPrice().multiply(new BigDecimal(seckillOrder.getNum().toString())));
+        this.save(orderEntity);
+
+        //save order item info
+        OrderItemEntity orderItemEntity = new OrderItemEntity();
+        orderItemEntity.setOrderSn(seckillOrder.getOrderSn());
+        orderItemEntity.setSkuId(seckillOrder.getSkuId());
+        orderItemEntity.setSkuQuantity(seckillOrder.getNum());
+        orderItemEntity.setRealAmount(orderEntity.getPayAmount());
+        //TODO get more info from product service
+        orderItemService.save(orderItemEntity);
+
+        return orderEntity;
     }
 
     private void saveOrder(OrderCreateTO orderCreateTO) {

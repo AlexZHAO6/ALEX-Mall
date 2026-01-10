@@ -1,5 +1,6 @@
 package com.alex.mallorder.service;
 
+import com.alex.common.to.SeckillOrderTO;
 import com.alex.mallorder.vo.OrderConfirmVO;
 import com.alex.mallorder.vo.OrderSubmitVO;
 import com.alex.mallorder.vo.SubmitOrderResponseVO;
@@ -28,5 +29,7 @@ public interface OrderService extends IService<OrderEntity> {
     OrderEntity getOrderByOrderSn(String orderSn);
 
     void closeOrder(OrderEntity order);
+
+    OrderEntity createSeckillOrder(SeckillOrderTO seckillOrder);
 }
 
